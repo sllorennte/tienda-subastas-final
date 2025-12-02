@@ -59,6 +59,24 @@ body {
   background-color: #457b9d;
 }
 
+/* Delete button style */
+.btn-eliminar {
+  border: 1px solid rgba(185, 28, 28, 0.15);
+  color: #b91c1c;
+  background: transparent;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+}
+
+.btn-eliminar:hover {
+  background: rgba(185, 28, 28, 0.06);
+}
+
+/* Slightly stronger card body spacing */
+.card-body p.card-text {
+  color: #1a1a1a;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .mensaje-header {

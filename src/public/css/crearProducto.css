@@ -16,3 +16,21 @@ body {
 .btn-primary:hover {
   background-color: #d97706;
 }
+
+/* Image preview thumbnails */
+#preview-imagenes img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Center the card and add lighter background */
+.card-body {
+  background: linear-gradient(180deg, #ffffff, #fbfbfd);
+}
+
+.card-title {
+  font-weight: 700;
+}

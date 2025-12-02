@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // (no header avatar logout handler in reverted state)
+
   // Navegación entre secciones
   const menuBtns = document.querySelectorAll('[data-section]');
   const secciones = document.querySelectorAll('#pujas-activas, #pujas-creadas, #configuracion');
@@ -32,13 +34,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // Cargar datos del usuario
   async function cargarDatosUsuario() {
     try {
-      const res = await fetch('/api/usuarios/me', {
+      const url = (typeof apiUrl === 'function') ? apiUrl('/api/usuarios/me') : '/api/usuarios/me';
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error();
       const usuario = await res.json();
-      document.getElementById('username-config').value = usuario.username;
-      document.getElementById('email-config').value = usuario.email;
+      document.getElementById('username-config').value = usuario.username || '';
+      document.getElementById('email-config').value = usuario.email || '';
+      const perfilUser = document.getElementById('perfil-username');
+      const perfilEmail = document.getElementById('perfil-email');
+      if (perfilUser) perfilUser.textContent = usuario.username || 'Usuario';
+      if (perfilEmail) perfilEmail.textContent = usuario.email || '';
+      // optional fields
+      const bio = document.getElementById('bio-config');
+      if (bio && usuario.bio) bio.value = usuario.bio;
+      // notification buttons
+      const notifBtns = document.querySelectorAll('.notif-btn');
+      if (notifBtns && usuario.notificaciones) {
+        notifBtns.forEach(b => b.classList.toggle('active', b.dataset.value === usuario.notificaciones));
+      }
     } catch (err) {
       console.error('No se pudo cargar los datos del usuario.');
     }
@@ -52,109 +67,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = formConfig.username.value.trim();
     const email = formConfig.email.value.trim();
     const password = formConfig.password.value;
+    const bioVal = document.getElementById('bio-config') ? document.getElementById('bio-config').value.trim() : undefined;
 
     if (!username || !email) return;
 
+    const payload = { username, email };
+    if (password) payload.password = password;
+    if (typeof bioVal !== 'undefined') payload.bio = bioVal;
+
     try {
-      const res = await fetch('/api/usuarios/me', {
+      const url = (typeof apiUrl === 'function') ? apiUrl('/api/usuarios/me') : '/api/usuarios/me';
+      const res = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ username, email, password: password || undefined })
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
         formConfig.password.value = '';
+        mostrarNotificacion('Datos actualizados correctamente');
       } else {
         const errData = await res.json();
         console.error('Error al actualizar:', errData.error || 'Error desconocido');
+        mostrarNotificacion(errData.error || 'No se pudo actualizar', 'danger');
       }
     } catch (err) {
-      console.error('Error al actualizar datos.');
+      console.error('Error al actualizar datos.', err);
+      mostrarNotificacion('Error de red al actualizar', 'danger');
     }
   });
 
-  // Cargar pujas activas
-  async function cargarPujasActivas() {
-    try {
-      const res = await fetch('/api/pujas/mias', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      const pujas = Array.isArray(data) ? data : data.pujas || [];
-
-      const contenedor = document.getElementById('lista-pujas-activas');
-      contenedor.innerHTML = '';
-
-      if (pujas.length === 0) {
-        contenedor.innerHTML = '<p>No tienes pujas activas.</p>';
-        return;
-      }
-
-      pujas.forEach(puja => {
-        const estado = puja.producto.estado === 'activo' && new Date(puja.producto.fechaExpiracion) > new Date()
-          ? 'Activa' : 'Cerrada';
-
-        const card = document.createElement('div');
-        card.className = 'puja-card';
-
-        card.innerHTML = `
-          <h3>${puja.producto.titulo}</h3>
-          <p><strong>Precio inicial:</strong> €${puja.producto.precioInicial}</p>
-          <p><strong>Mi puja:</strong> €${puja.cantidad}</p>
-          <p class="puja-estado-${estado.toLowerCase()}"><strong>Estado:</strong> ${estado}</p>
-          <p><strong>Fecha fin subasta:</strong> ${new Date(puja.producto.fechaExpiracion).toLocaleString()}</p>
-        `;
-        contenedor.appendChild(card);
-      });
-    } catch (err) {
-      console.error('No se pudieron cargar las pujas activas.');
-    }
-  }
-
-  // Cargar pujas creadas
-  async function cargarPujasCreadas() {
-    try {
-      const res = await fetch('/api/productos/mios', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      const productos = data.productos || [];
-
-      const contenedor = document.getElementById('lista-pujas-creadas');
-      contenedor.innerHTML = '';
-
-      if (productos.length === 0) {
-        contenedor.innerHTML = '<p>No has creado ninguna puja.</p>';
-        return;
-      }
-
-      productos.forEach(prod => {
-        const estado = prod.estado === 'activo' && new Date(prod.fechaExpiracion) > new Date()
-          ? 'Activa' : 'Cerrada';
-
-        const card = document.createElement('div');
-        card.className = 'puja-card';
-
-        card.innerHTML = `
-          <h3>${prod.titulo}</h3>
-          <p><strong>Precio inicial:</strong> €${prod.precioInicial}</p>
-          <p class="puja-estado-${estado.toLowerCase()}"><strong>Estado:</strong> ${estado}</p>
-          <p><strong>Fecha fin subasta:</strong> ${new Date(prod.fechaExpiracion).toLocaleString()}</p>
-        `;
-        contenedor.appendChild(card);
-      });
-    } catch (err) {
-      console.error('No se pudieron cargar las pujas creadas.');
-    }
-  }
+  // Init notification buttons behavior
+  document.querySelectorAll('.notif-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.notif-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
 
   // Iniciar carga
   cargarDatosUsuario();
-  cargarPujasActivas();
-  cargarPujasCreadas();
 });

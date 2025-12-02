@@ -5,92 +5,119 @@
   <title>Mi Cuenta - Biddable</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Bootstrap + Fuentes -->
+  <!-- Bootstrap y estilos -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-  <!-- Estilos personalizados -->
   <link rel="stylesheet" href="css/miCuenta.css" />
   <link rel="stylesheet" href="css/index.css" />
+  <link rel="stylesheet" href="css/theme.css" />
 </head>
 <body>
 
-   <!-- HEADER MODIFICADO -->
-<header class="bg-white border-bottom shadow-sm sticky-top header-grande">
-  <div class="container d-flex align-items-center justify-content-between py-3">
-    <a href="index.html" class="d-flex align-items-center gap-3 text-decoration-none">
-      <img src="uploads/logo-removebg-preview.png" alt="Logo" height="60" />
-      <span class="fw-bold text-dark fs-4">Biddable</span>
-    </a>
-    <nav class="d-flex align-items-center gap-4">
-      <a href="productos.html" class="nav-link">Subastas</a>
-      <a href="misPujas.html" class="nav-link">Mis Pujas</a>
-      <a href="misProductos.html" class="nav-link">Mis Productos</a>
-      <a href="mensajes.html" class="text-dark"><i class="fas fa-envelope fs-5"></i></a>
-      <a href="miCuenta.html" class="text-dark"><i class="fas fa-user fs-5"></i></a>
-    </nav>
-  </div>
-</header>
+   <!-- HEADER -->
+<header class="app-header">
+    <div class="app-header__inner">
+      <a href="index.html" class="app-brand">
+        <img src="uploads/logo-removebg-preview.png" alt="Biddable" />
+        Biddable
+      </a>
+      <nav class="app-nav">
+        <a href="index.html">Inicio</a>
+        <a href="productos.html" class="is-active">Subastas</a>
+        <a href="misPujas.html">Mis pujas</a>
+        <a href="misProductos.html">Mis productos</a>
+        <a href="favoritos.html">Favoritos</a>
+        <a href="mensajes.html"><i class="fas fa-envelope"></i></a>
+        <a href="miCuenta.html"><i class="fas fa-user"></i></a>
+      </nav>
+      <div class="app-header__actions">
+        <a href="crearProducto.html" class="btn btn-outline-light">Vender un artículo</a>
+        <a href="productos.html" class="btn btn-primary">Explorar subastas</a>
+      </div>
+    </div>
+  </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
   <main class="container my-5">
-    <div class="row">
-      <!-- Menú lateral -->
-      <aside class="col-md-3 mb-4">
-        <div class="list-group">
-          <button class="list-group-item list-group-item-action active" data-section="pujas-activas">Mis Pujas Activas</button>
-          <button class="list-group-item list-group-item-action" data-section="pujas-creadas">Mis Pujas Creadas</button>
-          <button class="list-group-item list-group-item-action" data-section="configuracion">Configuración</button>
-        </div>
-      </aside>
-
-      <!-- Secciones dinámicas -->
-      <section class="col-md-9">
-        <!-- PUJAS ACTIVAS -->
-        <div id="pujas-activas" class="seccion-activa">
-          <h3 class="mb-4">Mis Pujas Activas</h3>
-          <div id="lista-pujas-activas" class="d-flex flex-column gap-3">
-            <!-- Tarjetas dinámicas -->
+    <div class="account-page mx-auto" style="max-width:1100px;">
+      <div class="row g-4">
+        <aside class="col-lg-4 d-none d-lg-block">
+          <div class="card shadow-sm border-0 account-aside">
+            <div class="card-body text-center py-5">
+              <img src="uploads/avatar-placeholder.png" alt="Avatar" class="account-avatar mb-3">
+              <h4 id="perfil-username" class="mb-1">Nombre</h4>
+              <p id="perfil-email" class="text-muted small mb-3">correo@ejemplo.com</p>
+              <div class="d-grid gap-2">
+                <a href="crearProducto.html" class="btn btn-outline-secondary btn-sm">Vender un artículo</a>
+                <a href="favoritos.html" class="btn btn-outline-primary btn-sm">Ver favoritos</a>
+              </div>
+            </div>
           </div>
-        </div>
+        </aside>
 
-        <!-- PUJAS CREADAS -->
-        <div id="pujas-creadas" class="d-none">
-          <h3 class="mb-4">Mis Pujas Creadas</h3>
-          <div id="lista-pujas-creadas" class="d-flex flex-column gap-3">
-            <!-- Tarjetas dinámicas -->
+        <section class="col-lg-8">
+          <div class="card shadow-sm border-0 account-card">
+            <div class="card-header bg-white border-0 py-3">
+              <h3 class="mb-0">Ajustes de la cuenta</h3>
+              <p class="text-muted small mb-0">Gestiona tu información personal y preferencias de seguridad.</p>
+            </div>
+            <div class="card-body">
+              <form id="form-configuracion" class="account-form">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="username-config" class="form-label">Nombre de usuario</label>
+                    <input type="text" id="username-config" name="username" class="form-control form-control-lg" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="email-config" class="form-label">Correo electrónico</label>
+                    <input type="email" id="email-config" name="email" class="form-control form-control-lg" required>
+                  </div>
+
+                  <div class="col-12">
+                    <label for="bio-config" class="form-label">Biografía (opcional)</label>
+                    <textarea id="bio-config" class="form-control" rows="3" placeholder="Una breve descripción sobre ti..."></textarea>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="password-config" class="form-label">Cambiar contraseña</label>
+                    <input type="password" id="password-config" name="password" class="form-control" placeholder="Nueva contraseña">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Notificaciones</label>
+                    <div class="row gx-2 gy-2">
+                      <div class="col-auto">
+                        <button type="button" class="btn btn-outline-secondary btn-sm notif-btn" data-value="email">Email</button>
+                      </div>
+                      <div class="col-auto">
+                        <button type="button" class="btn btn-outline-secondary btn-sm notif-btn" data-value="push">Push</button>
+                      </div>
+                      <div class="col-auto">
+                        <button type="button" class="btn btn-outline-secondary btn-sm notif-btn" data-value="none">No recibir</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                      <button type="submit" class="btn btn-primary btn-lg">Guardar cambios</button>
+                    </div>
+                    <div>
+                      <button type="button" id="btn-logout" class="btn btn-outline-danger">Cerrar sesión</button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-
-        <!-- CONFIGURACIÓN -->
-<div id="configuracion" class="d-none">
-  <h3 class="mb-4">Configuración de cuenta</h3>
-  <form id="form-configuracion" class="bg-light p-4 rounded shadow-sm">
-    <div class="mb-3">
-      <label for="username-config" class="form-label">Nombre de usuario</label>
-      <input type="text" id="username-config" name="username" class="form-control" required>
+        </section>
+      </div>
     </div>
-    <div class="mb-3">
-      <label for="email-config" class="form-label">Correo electrónico</label>
-      <input type="email" id="email-config" name="email" class="form-control" required>
-    </div>
-    <div class="mb-3">
-      <label for="password-config" class="form-label">Cambiar contraseña</label>
-      <input type="password" id="password-config" name="password" class="form-control" placeholder="Nueva contraseña">
-    </div>
-    <div class="d-flex justify-content-between align-items-center mt-4">
-      <button type="submit" class="btn btn-primary">Guardar cambios</button>
-      <button type="button" id="btn-logout" class="btn btn-outline-danger">Cerrar sesión</button>
-    </div>
-  </form>
-</div>
   </main>
 <!-- Contenedor para notificaciones -->
 <div id="notificacion-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
 <script src="js/notificacion.js"></script>
 
-  <!-- FOOTER -->
   <footer class="text-center py-4 text-muted border-top">
     <small>&copy; 2025 Biddable. Todos los derechos reservados.</small>
   </footer>

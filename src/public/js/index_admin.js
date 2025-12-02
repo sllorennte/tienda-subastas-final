@@ -1,5 +1,3 @@
-// import { mostrarNotificacion } from './notificacion.js'; // Descomenta si deseas usarlo
-
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
   if (!token) return (window.location.href = 'login.html');
@@ -17,7 +15,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.error('Error al obtener usuarios:', err);
     totalUsuariosEl.textContent = '—';
-    // mostrarNotificacion('Error al obtener usuarios', 'danger');
   }
 
   try {
@@ -25,12 +22,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await resProductos.json();
-    const productos = data.productos || data; // Para compatibilidad
-    totalProductosEl.textContent = productos.length;
+    // prefer metadata.totalItems if present (paginado), otherwise fallback to array length
+    const totalProductos = (data && data.metadata && typeof data.metadata.totalItems === 'number') ? data.metadata.totalItems : (Array.isArray(data) ? data.length : (Array.isArray(data.productos) ? data.productos.length : 0));
+    totalProductosEl.textContent = totalProductos;
   } catch (err) {
     console.error('Error al obtener productos:', err);
     totalProductosEl.textContent = '—';
-    // mostrarNotificacion('Error al obtener productos', 'danger');
   }
 
   try {
@@ -42,6 +39,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.error('Error al obtener pujas:', err);
     totalPujasEl.textContent = '—';
-    // mostrarNotificacion('Error al obtener pujas', 'danger');
   }
 });

@@ -9,6 +9,8 @@ const usuarioSchema = new mongoose.Schema({
     enum: ['admin', 'usuario'],
     default: 'usuario'
   },
+  bio: { type: String, default: '' },
+  contacto: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 

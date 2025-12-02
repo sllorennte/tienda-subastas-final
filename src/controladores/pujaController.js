@@ -1,16 +1,36 @@
 const Puja     = require('../modelos/Puja');
 const Producto = require('../modelos/Producto');
+const Notificacion = require('../modelos/Notificacion');
 
 exports.crearPuja = async (req, res) => {
   try {
-    const { producto: productoId, cantidad } = req.body;
-    const pujador = req.user.id;  // <-- sacar del token
+    const { producto: productoId } = req.body;
+    let { cantidad } = req.body;
+    const pujador = req.user && req.user.id;
+
+    if (!pujador) {
+      return res.status(401).json({ error: 'No autenticado. Token inválido o expirado.' });
+    }
+
+    if (cantidad === undefined || cantidad === null) {
+      return res.status(400).json({ error: 'Cantidad de la puja requerida.' });
+    }
+
+    cantidad = Number(cantidad);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      return res.status(400).json({ error: 'Cantidad inválida. Debe ser un número mayor que 0.' });
+    }
+
+      console.log('[crearPuja] inicio - user:', req.user ? { id: req.user.id, username: req.user.username } : null);
+      console.log('[crearPuja] body:', { producto: productoId, cantidad });
 
     const producto = await Producto.findById(productoId);
     if (!producto) 
       return res.status(404).json({ error: 'Producto no encontrado' });
 
-    if (producto.estado !== 'activo' || new Date() > producto.fechaExpiracion)
+    const ahora = new Date();
+    const exp = new Date(producto.fechaExpiracion);
+    if (producto.estado !== 'activo' || ahora > exp)
       return res.status(400).json({ error: 'No se puede pujar: subasta cerrada' });
 
     const ultimaPuja = await Puja.find({ producto: productoId })
@@ -21,6 +41,8 @@ exports.crearPuja = async (req, res) => {
       ? ultimaPuja[0].cantidad 
       : producto.precioInicial;
 
+      console.log('[crearPuja] producto.precioInicial:', producto.precioInicial, 'ultimaPuja:', ultimaPuja, 'maxActual:', maxActual);
+
     if (cantidad <= maxActual)
       return res.status(400).json({
         error: `La puja debe ser superior a ${maxActual}`
@@ -29,10 +51,37 @@ exports.crearPuja = async (req, res) => {
     const puja = new Puja({ producto: productoId, pujador, cantidad });
     await puja.save();
 
+    // Emitir evento en tiempo real si Socket.IO está disponible
+    try {
+      const io = req.app && req.app.locals && req.app.locals.io;
+      if (io) {
+        const room = `producto_${productoId}`;
+        io.to(room).emit('nuevaPuja', {
+          producto: productoId,
+          pujador,
+          cantidad,
+          fechaPuja: puja.fechaPuja
+        });
+      }
+    } catch (e) {
+      console.warn('No se pudo emitir evento Socket.IO:', e.message || e);
+    }
+
+    // Crear notificación para el vendedor del producto
+    try {
+      const vendedorId = producto.vendedor;
+      const titulo = `Nueva puja en tu subasta`;
+      const textoNoti = `€${cantidad} en ${producto.titulo}`;
+      const noti = new Notificacion({ usuario: vendedorId, tipo: 'puja', titulo, texto: textoNoti, link: `/producto.html?id=${productoId}` });
+      await noti.save();
+      const io2 = req.app && req.app.locals && req.app.locals.io;
+      if (io2) io2.to(`user_${vendedorId}`).emit('notificacion', { id: noti._id, tipo: noti.tipo, titulo: noti.titulo, texto: noti.texto, fecha: noti.fecha, link: noti.link });
+    } catch (e) { console.warn('Error creando notificacion puja:', e && e.message ? e.message : e); }
+
     res.status(201).json({ mensaje: 'Puja registrada', puja });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear puja', detalles: err });
+      console.error('[crearPuja] error:', err);
+      res.status(500).json({ error: 'Error al crear puja', detalles: err.message || err });
   }
 };
 
@@ -77,7 +126,6 @@ exports.eliminarPuja = async (req, res) => {
   }
 };
 
-// NUEVA función para /pujas/mias (pujas del usuario autenticado)
 exports.obtenerPujasDelUsuario = async (req, res) => {
   try {
     const pujas = await Puja.find({ pujador: req.user.id })

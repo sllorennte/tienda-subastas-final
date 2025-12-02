@@ -1,4 +1,5 @@
 const Producto = require('../modelos/Producto');
+const Puja = require('../modelos/Puja');
 
 exports.crearProducto = async (req, res) => {
   try {
@@ -8,10 +9,14 @@ exports.crearProducto = async (req, res) => {
       precioInicial,
       imagenes,
       vendedor,
+      categoria,
       fechaExpiracion
     } = req.body;
 
-    if (!titulo || precioInicial == null || !vendedor || !fechaExpiracion) {
+    // Si la ruta está protegida con verifyToken, podemos usar el usuario autenticado como vendedor por defecto
+    const vendedorId = vendedor || (req.user && req.user.id);
+
+    if (!titulo || precioInicial == null || !vendedorId || !fechaExpiracion) {
       return res.status(400).json({
         error: 'Título, precio inicial, vendedor y fecha de expiración son obligatorios.'
       });
@@ -38,6 +43,8 @@ exports.crearProducto = async (req, res) => {
       }
 
       listaImagenes = listaImagenes.map(nombre => `/uploads/${nombre}`);
+    } else if (Array.isArray(imagenes) && imagenes.length) {
+      listaImagenes = imagenes.map(nombre => String(nombre).trim()).filter(Boolean).map(n => `/uploads/${n}`);
     }
 
     const producto = new Producto({
@@ -45,7 +52,8 @@ exports.crearProducto = async (req, res) => {
       descripcion,
       precioInicial: parseFloat(precioInicial),
       imagenes: listaImagenes,
-      vendedor,
+      vendedor: vendedorId,
+      categoria: categoria || 'General',
       fechaExpiracion: fecha
     });
 
@@ -62,13 +70,23 @@ exports.obtenerProductos = async (req, res) => {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.max(parseInt(req.query.limit) || 10, 1);
     const search = req.query.search ? req.query.search.trim() : '';
+    const categoria = req.query.categoria ? req.query.categoria.trim() : '';
 
-    const filtro = {};
+  const filtro = {};
+  // por defecto sólo devolvemos subastas activas en el listado público
+  filtro.estado = 'activo';
     if (search) {
       filtro.$or = [
         { titulo: { $regex: search, $options: 'i' } },
         { descripcion: { $regex: search, $options: 'i' } }
       ];
+    }
+    if (categoria) {
+      filtro.categoria = categoria;
+    }
+    // Filtrar por vendedor si se pasa ?vendedor=ID
+    if (req.query.vendedor) {
+      filtro.vendedor = req.query.vendedor;
     }
 
     const totalItems = await Producto.countDocuments(filtro);
@@ -96,6 +114,47 @@ exports.obtenerProductos = async (req, res) => {
   }
 };
 
+// Obtener subastas finalizadas (vendidas) con ganador y precio final
+exports.obtenerFinalizadas = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 10, 1);
+    const skip = (page - 1) * limit;
+
+    const filtro = { estado: 'vendido' };
+    const totalItems = await Producto.countDocuments(filtro);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const productos = await Producto.find(filtro)
+      .populate('vendedor', 'username email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Para cada producto buscamos la puja más alta para obtener ganador y precio final
+    // Si el producto ya tiene campos resultado, úsalos; si no, intenta recuperar la puja más alta como fallback
+    const productosConResultado = await Promise.all(productos.map(async p => {
+      let ganador = null;
+      let precioFinal = null;
+      if (p.ganador) {
+        ganador = await (await Producto.populate(p, { path: 'ganador', select: 'username email' })).ganador;
+        precioFinal = p.precioFinal != null ? p.precioFinal : null;
+      } else {
+        const highest = await Puja.find({ producto: p._id }).sort({ cantidad: -1 }).limit(1).populate('pujador', 'username email');
+        const top = highest.length ? highest[0] : null;
+        ganador = top ? top.pujador : null;
+        precioFinal = top ? top.cantidad : null;
+      }
+      return Object.assign({}, p.toObject(), { ganador, precioFinal });
+    }));
+
+    res.json({ metadata: { page, limit, totalPages, totalItems }, productos: productosConResultado });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al leer subastas finalizadas' });
+  }
+};
+
 exports.obtenerProductoPorId = async (req, res) => {
   try {
     const producto = await Producto.findById(req.params.id)
@@ -105,6 +164,16 @@ exports.obtenerProductoPorId = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al leer producto' });
+  }
+};
+
+exports.obtenerCategorias = async (req, res) => {
+  try {
+    const categorias = await Producto.distinct('categoria');
+    res.json(categorias);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al leer categorías' });
   }
 };
 
@@ -125,6 +194,8 @@ exports.actualizarProducto = async (req, res) => {
         });
       }
       datos.imagenes = lista.map(nombre => `/uploads/${nombre}`);
+    } else if (Array.isArray(datos.imagenes) && datos.imagenes.length) {
+      datos.imagenes = datos.imagenes.map(n => `/uploads/${String(n).trim()}`).filter(Boolean);
     }
 
     if (datos.fechaExpiracion) {
@@ -159,7 +230,6 @@ exports.eliminarProducto = async (req, res) => {
   }
 };
 
-// NUEVA función para productos propios
 exports.obtenerProductosMios = async (req, res) => {
   try {
     const userId = req.user.id;

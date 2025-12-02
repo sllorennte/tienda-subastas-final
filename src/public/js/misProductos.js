@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Botón “Cerrar sesión”
+  // Botón Cerrar sesión
   const btnLogout = document.getElementById('btn-logout');
   if (btnLogout) {
     btnLogout.addEventListener('click', () => {

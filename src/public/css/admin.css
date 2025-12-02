@@ -16,3 +16,10 @@ body {
 .card-title {
   font-weight: 600;
 }
+
+/* Admin header */
+.header-grande a.nav-link { color: #495057; }
+.header-grande a.nav-link.active { font-weight: 700; color: #212529; }
+.header-grande .noti-badge { position: absolute; top: -6px; right: -10px; background: #dc3545; color: white; border-radius: 12px; padding: 0 6px; font-size: 12px; line-height: 18px; }
+
+.admin-header { background: #fff; border-bottom: 1px solid #e5e7eb; }

@@ -1,4 +1,4 @@
-import { mostrarNotificacion } from './notificacion.js';
+// Use global mostrarNotificacion injected by notificacion.js (loaded via <script>)
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
@@ -13,8 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnEnviarRespuesta = document.getElementById('btn-enviar-respuesta');
   let mensajeIdSeleccionado = null;
 
-  try {
-    const res = await fetch('/api/mensajes', {
+    try {
+    const base = (typeof apiUrl === 'function') ? apiUrl('/api/mensajes') : '/api/mensajes';
+    const res = await fetch(base, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
@@ -35,13 +36,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fechaFormateada = new Date(m.fecha).toLocaleString();
 
       card.innerHTML = `
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong>De: ${m.remitente.username}</strong>
-            <small class="text-muted">${fechaFormateada}</small>
+        <div class="card-body d-flex flex-column gap-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <div><strong>De: ${m.remitente.username}</strong><br/><small class="text-muted">${fechaFormateada}</small></div>
+            <div class="btn-group">
+              <button data-id="${m._id}" class="btn btn-outline-danger btn-sm btn-eliminar">Eliminar</button>
+              <button data-id="${m._id}" class="btn btn-outline-primary btn-sm btn-responder">Responder</button>
+            </div>
           </div>
-          <p class="card-text">${m.texto}</p>
-          <button data-id="${m._id}" class="btn btn-outline-primary btn-sm btn-responder">Responder</button>
+          <p class="card-text mb-0">${m.texto}</p>
         </div>
       `;
       listaMensajes.appendChild(card);
@@ -55,6 +58,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
+    // Delete handlers
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        // No blocking confirm: delete immediately and show non-blocking notification
+        try {
+          const delUrl = (typeof apiUrl === 'function') ? apiUrl(`/api/mensajes/${id}`) : `/api/mensajes/${id}`;
+          const res = await fetch(delUrl, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            if (window.mostrarNotificacion) window.mostrarNotificacion('Mensaje eliminado', 'success');
+            // quitar tarjeta del DOM
+            e.currentTarget.closest('.card').remove();
+            // si ya no quedan mensajes, mostrar sinMensajes
+            if (!listaMensajes.querySelector('.card')) sinMensajes.style.display = 'block';
+          } else {
+            if (window.mostrarNotificacion) window.mostrarNotificacion('No se pudo eliminar el mensaje.', 'danger');
+          }
+        } catch (err) {
+          console.error('Error borrando mensaje:', err);
+          if (window.mostrarNotificacion) window.mostrarNotificacion('Error de red al eliminar mensaje.', 'danger');
+        }
+      });
+    });
+
     btnEnviarRespuesta.addEventListener('click', async () => {
       const texto = inputRespuesta.value.trim();
       if (!texto) {
@@ -62,8 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      try {
-        const res = await fetch(`/api/mensajes/${mensajeIdSeleccionado}`, {
+        try {
+        const postUrl = (typeof apiUrl === 'function') ? apiUrl(`/api/mensajes/${mensajeIdSeleccionado}`) : `/api/mensajes/${mensajeIdSeleccionado}`;
+        const res = await fetch(postUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

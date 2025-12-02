@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const selectCategoria  = document.getElementById('categoria');
 
   let todosProductos = [];
+  let pageSize = 12; // items por página
+  let currentPage = 1;
+  let favoritosSet = new Set();
 
   cargarTodosProductos();
 
@@ -36,13 +39,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       todosProductos = Array.isArray(data.productos) ? data.productos : [];
+      await cargarFavoritos();
       poblarSelectCategorias(todosProductos);
-      mostrarListado(todosProductos);
+      renderPage(1, todosProductos);
     } catch (err) {
       console.error(err);
       sinProductosMsg.textContent = 'Error al cargar productos. Intenta recargar la página.';
       sinProductosMsg.classList.remove('d-none');
     }
+  }
+
+  async function cargarFavoritos() {
+    try {
+      const res = await fetch('/api/favoritos', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) { favoritosSet = new Set(); return; }
+      const items = await res.json();
+      // items may be array of favoritos with populated producto
+      favoritosSet = new Set((items || []).map(f => (f.producto && f.producto._id) ? String(f.producto._id) : String(f.producto)));
+    } catch (err) { favoritosSet = new Set(); }
   }
 
   function poblarSelectCategorias(productos) {
@@ -61,44 +75,107 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function mostrarListado(productos) {
-    listaProductos.innerHTML = '';
+    // wrapper para compatibilidad: renderiza la página actual del conjunto
+    renderPage(currentPage, productos);
+  }
 
+  function renderPage(page, productos) {
     if (!Array.isArray(productos) || productos.length === 0) {
+      listaProductos.innerHTML = '';
       sinProductosMsg.classList.remove('d-none');
+      const pagNav = document.getElementById('paginacion'); if (pagNav) pagNav.innerHTML = '';
       return;
     }
 
     sinProductosMsg.classList.add('d-none');
 
-    productos.forEach(p => {
-      const imagen = (Array.isArray(p.imagenes) && p.imagenes.length)
-        ? p.imagenes[0]
-        : 'css/placeholder.png';
+    const total = productos.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    currentPage = Math.min(Math.max(1, page), totalPages);
 
-      const fechaExpStr = new Date(p.fechaExpiracion).toLocaleDateString('es-ES', {
-        day: '2-digit', month: '2-digit', year: 'numeric'
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const items = productos.slice(start, end);
+
+      listaProductos.innerHTML = '';
+      if (!Array.isArray(productos) || productos.length === 0) {
+        listaProductos.innerHTML = `
+          <div class="text-center text-muted py-5">
+            <p>No se encontraron productos.</p>
+          </div>`;
+        return;
+      }
+
+      // Render as boxed product cards matching subastas-finalizadas UI
+      items.forEach(p => {
+        const primeraImagen = p.imagenes?.[0] || 'uploads/placeholder.png';
+        const fechaExp = p.fechaExpiracion ? new Date(p.fechaExpiracion).toLocaleDateString('es-ES') : '—';
+
+        const card = document.createElement('article');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-card__media"><img src="${primeraImagen}" alt="${p.titulo}"></div>
+          <div class="product-card__body">
+            <h3>${p.titulo}</h3>
+            <p>${p.descripcion || ''}</p>
+            <div class="product-card__meta">
+              <span><strong>Inicial:</strong> €${Number(p.precioInicial).toFixed(2)}</span>
+              <span><strong>Caduca:</strong> ${fechaExp}</span>
+              <span><strong>Vendedor:</strong> <a href="usuario.html?id=${p.vendedor?._id}" class="seller-link">${p.vendedor?.username || '—'}</a></span>
+              <span><strong>Categoría:</strong> ${p.categoria || '—'}</span>
+            </div>
+            <div class="product-card__actions">
+              <a href="producto.html?id=${p._id}" class="btn btn-primary">Ver subasta</a>
+              <button class="btn btn-outline-primary fav-toggle mt-2" data-id="${p._id}" title="Añadir a favoritos">
+                <i class="${favoritosSet.has(String(p._id)) ? 'fas' : 'far'} fa-heart"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        listaProductos.appendChild(card);
       });
 
-      const col = document.createElement('div');
-      col.className = 'col-md-4';
+    // attach favorite handlers
+    listaProductos.querySelectorAll('.fav-toggle').forEach(btn => btn.addEventListener('click', onFavToggle));
 
-      col.innerHTML = `
-        <div class="card h-100 shadow-sm">
-          <img src="${imagen}" class="card-img-top" alt="${p.titulo}">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title text-primary">${p.titulo}</h5>
-            <p class="card-text text-muted">${p.descripcion || ''}</p>
-            <ul class="list-unstyled small mb-3">
-              <li><strong>Precio inicial:</strong> €${p.precioInicial.toFixed(2)}</li>
-              <li><strong>Categoría:</strong> ${p.categoria || '—'}</li>
-              <li><strong>Caduca:</strong> ${fechaExpStr}</li>
-            </ul>
-            <a href="producto.html?id=${p._id}" class="btn btn-outline-primary mt-auto">Ver subasta</a>
-          </div>
-        </div>
-      `;
-      listaProductos.appendChild(col);
-    });
+    buildPagination(totalPages);
+  }
+
+  function buildPagination(totalPages) {
+    const nav = document.getElementById('paginacion');
+    if (!nav) return;
+    nav.innerHTML = '';
+
+    const ul = document.createElement('ul');
+    ul.className = 'pagination';
+
+    const addPageItem = (label, pageNum, disabled = false, active = false) => {
+      const li = document.createElement('li');
+      li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+      const a = document.createElement('a');
+      a.className = 'page-link';
+      a.href = '#';
+      a.textContent = label;
+      a.addEventListener('click', (e) => { e.preventDefault(); if (!disabled) renderPage(pageNum, todosProductos); });
+      li.appendChild(a);
+      ul.appendChild(li);
+    };
+
+    addPageItem('«', currentPage - 1, currentPage === 1);
+
+    // show up to 7 page numbers centered
+    const maxSlots = 7;
+    let start = Math.max(1, currentPage - Math.floor(maxSlots/2));
+    let end = Math.min(totalPages, start + maxSlots - 1);
+    if (end - start < maxSlots - 1) start = Math.max(1, end - maxSlots + 1);
+
+    for (let i = start; i <= end; i++) {
+      addPageItem(i, i, false, i === currentPage);
+    }
+
+    addPageItem('»', currentPage + 1, currentPage === totalPages);
+
+    nav.appendChild(ul);
   }
 
   formFiltros.addEventListener('submit', e => {
@@ -121,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return true;
     });
 
+    currentPage = 1;
     mostrarListado(filtrados);
   });
 
@@ -129,6 +207,30 @@ document.addEventListener('DOMContentLoaded', () => {
     inputPrecioMax.value = '';
     inputFechaExp.value  = '';
     selectCategoria.value = '';
+    currentPage = 1;
     mostrarListado(todosProductos);
   });
+
+  async function onFavToggle(e) {
+    const btn = e.currentTarget;
+    const id = btn.dataset.id;
+    try {
+      const isFav = favoritosSet.has(String(id));
+      if (isFav) {
+        await fetch(`/api/favoritos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        favoritosSet.delete(String(id));
+      } else {
+        await fetch('/api/favoritos', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ producto: id }) });
+        favoritosSet.add(String(id));
+      }
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fas', favoritosSet.has(String(id)));
+        icon.classList.toggle('far', !favoritosSet.has(String(id)));
+      }
+    } catch (err) {
+      console.error('Error toggling favorito', err);
+      alert('Error al actualizar favoritos');
+    }
+  }
 });
