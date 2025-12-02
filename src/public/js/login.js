@@ -1,5 +1,3 @@
-// import { mostrarNotificacion } from './notificacion.js'; // Descomenta si usas el sistema de notificaciones
-
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('form-login');
   const usuarioInput = document.getElementById('usuario');
@@ -12,12 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const contrasena = contrasenaInput.value;
 
     if (!usuario) {
-      // mostrarNotificacion('El campo "Usuario" es obligatorio.', 'warning');
       return;
     }
 
     if (!contrasena) {
-      // mostrarNotificacion('El campo "Contraseña" es obligatorio.', 'warning');
       return;
     }
 
@@ -31,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       if (!res.ok) {
-        // mostrarNotificacion(data.error || 'Credenciales incorrectas.', 'danger');
         return;
       }
 
@@ -50,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error(err);
-      // mostrarNotificacion('Error de red o servidor al iniciar sesión.', 'danger');
     }
   });
 

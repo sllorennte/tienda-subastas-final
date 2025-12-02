@@ -69,10 +69,10 @@ exports.obtenerUsuarioPorId = async (req, res) => {
 
 exports.actualizarUsuario = async (req, res) => {
   try {
-    const { username, email } = req.body;
+    const { username, email, bio, contacto } = req.body;
     const usuario = await Usuario.findByIdAndUpdate(
       req.params.id,
-      { username, email },
+      { username, email, bio, contacto },
       { new: true, runValidators: true }
     ).select('-password');
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -80,6 +80,32 @@ exports.actualizarUsuario = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: 'Error al actualizar', detalles: err });
+  }
+};
+
+exports.actualizarUsuarioActual = async (req, res) => {
+  try {
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ error: 'No autorizado' });
+    const { username, email, bio, contacto, password } = req.body;
+
+    const update = {};
+    if (username) update.username = username;
+    if (email) update.email = email;
+    if (typeof bio !== 'undefined') update.bio = bio;
+    if (typeof contacto !== 'undefined') update.contacto = contacto;
+    if (password) {
+      const bcrypt = require('bcrypt');
+      const salt = await bcrypt.genSalt(10);
+      update.password = await bcrypt.hash(password, salt);
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).select('-password');
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ mensaje: 'Usuario actualizado', usuario });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: 'Error al actualizar usuario', detalles: err });
   }
 };
 

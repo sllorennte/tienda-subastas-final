@@ -1,4 +1,4 @@
-import { mostrarNotificacion } from './notificacion.js';
+import { mostrarNotificacion } from './notificacion.module.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
@@ -19,7 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await res.json();
     const productos = data.productos;
 
-    productos.forEach((p, index) => {
+    if (!productos || productos.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="5" class="text-center">No hay productos disponibles.</td>';
+      tbody.appendChild(tr);
+    } else {
+      productos.forEach((p, index) => {
       const fila = document.createElement('tr');
       fila.innerHTML = `
         <td>${p.titulo}</td>
@@ -31,7 +36,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         </td>
       `;
       tbody.appendChild(fila);
-    });
+      });
+    }
 
     tbody.addEventListener('click', e => {
       if (e.target.tagName === 'BUTTON') {

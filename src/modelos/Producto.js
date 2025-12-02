@@ -18,6 +18,11 @@ const productoSchema = new mongoose.Schema({
     ref: 'Usuario',
     required: true
   },
+  categoria: {
+    type: String,
+    trim: true,
+    default: 'General'
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -32,5 +37,14 @@ const productoSchema = new mongoose.Schema({
     default: 'activo'
   }
 });
+
+// Campos opcionales para registrar el resultado final de la subasta
+productoSchema.add({
+  ganador: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
+  precioFinal: { type: Number, default: null }
+});
+
+// Índices útiles para consultas de expiración y estado
+productoSchema.index({ estado: 1, fechaExpiracion: 1 });
 
 module.exports = mongoose.model('Producto', productoSchema);

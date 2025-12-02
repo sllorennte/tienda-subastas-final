@@ -1,4 +1,4 @@
-import { mostrarNotificacion } from './notificacion.js';
+import { mostrarNotificacion } from './notificacion.module.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
@@ -18,7 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const usuarios = await res.json();
 
-    usuarios.forEach(usuario => {
+    if (!usuarios || usuarios.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="4" class="text-center">No hay usuarios registrados.</td>';
+      tbody.appendChild(tr);
+    } else {
+      usuarios.forEach(usuario => {
       const fila = document.createElement('tr');
       fila.innerHTML = `
         <td>${usuario.username}</td>
@@ -31,7 +36,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         </td>
       `;
       tbody.appendChild(fila);
-    });
+      });
+    }
 
     tbody.addEventListener('click', e => {
       if (e.target.tagName === 'BUTTON') {

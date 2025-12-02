@@ -1,4 +1,3 @@
-<!-- interfaz/crearProducto.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,23 +12,28 @@
   <!-- Estilos personalizados -->
   <link rel="stylesheet" href="css/crearProducto.css">
   <link rel="stylesheet" href="css/index.css" />
+  <link rel="stylesheet" href="css/theme.css" />
 </head>
 <body>
-<header class="bg-white border-bottom shadow-sm sticky-top header-grande">
-  <div class="container d-flex align-items-center justify-content-between py-3">
-    <a href="index.html" class="d-flex align-items-center gap-3 text-decoration-none">
-      <img src="uploads/logo-removebg-preview.png" alt="Logo" height="60" />
-      <span class="fw-bold text-dark fs-4">Biddable</span>
-    </a>
-    <nav class="d-flex align-items-center gap-4">
-      <a href="productos.html" class="nav-link">Subastas</a>
-      <a href="misPujas.html" class="nav-link">Mis Pujas</a>
-      <a href="misProductos.html" class="nav-link">Mis Productos</a>
-      <a href="mensajes.html" class="text-dark"><i class="fas fa-envelope fs-5"></i></a>
-      <a href="miCuenta.html" class="text-dark"><i class="fas fa-user fs-5"></i></a>
-    </nav>
-  </div>
-</header>
+<header class="app-header">
+    <div class="app-header__inner">
+      <a href="index.html" class="app-brand">
+        <img src="uploads/logo-removebg-preview.png" alt="Biddable" />
+        Biddable
+      </a>
+      <nav class="app-nav">
+        <a href="productos.html" class="is-active">Subastas</a>
+        <a href="misPujas.html">Mis pujas</a>
+        <a href="misProductos.html">Mis productos</a>
+        <a href="mensajes.html"><i class="fas fa-envelope"></i></a>
+        <a href="miCuenta.html"><i class="fas fa-user"></i></a>
+      </nav>
+      <div class="app-header__actions">
+        <a href="crearProducto.html" class="btn btn-outline-light">Vender un artículo</a>
+        <a href="productos.html" class="btn btn-primary">Explorar subastas</a>
+      </div>
+    </div>
+  </header>
 
 <div class="container py-5">
   <div class="row justify-content-center">
@@ -54,14 +58,26 @@
             </div>
 
             <div class="mb-3">
-              <label for="imagenes" class="form-label">Nombres de imágenes</label>
-              <input type="text" class="form-control" id="imagenes" name="imagenes" placeholder="silla.jpg, mesa.png">
+              <label for="imagenes-files" class="form-label">Imágenes (sube desde tu PC)</label>
+              <input type="file" class="form-control" id="imagenes-files" name="imagenes-files" accept="image/*" multiple>
+              <div id="preview-imagenes" class="mt-2 d-flex gap-2 flex-wrap"></div>
             </div>
 
             <div class="mb-3">
               <label for="fechaExpiracion" class="form-label">Fecha de expiración</label>
               <input type="datetime-local" class="form-control" id="fechaExpiracion" name="fechaExpiracion" required>
             </div>
+           
+             <div class="mb-3">
+               <label for="categoria" class="form-label">Categoría</label>
+               <select id="categoria" name="categoria" class="form-select">
+                 <option value="">Seleccione una categoría</option>
+                 <option value="tecnologia">Tecnología</option>
+                 <option value="moda">Moda</option>
+                 <option value="hogar">Hogar</option>
+                 <option value="coleccionismo">Coleccionismo</option>
+               </select>
+             </div>
 
             <div id="error" class="text-danger mb-3" style="display:none;"></div>
 
@@ -78,7 +94,6 @@
 <!-- Contenedor para notificaciones -->
 <div id="notificacion-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
 
-<!-- Solo un script con type="module" -->
-<script type="module" src="js/crearProducto.js"></script>
+<script src="js/crearProducto.js"></script>
 </body>
 </html>

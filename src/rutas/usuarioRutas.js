@@ -15,6 +15,9 @@ router.get('/usuarios/me', verifyToken, ctrl.obtenerUsuarioActual);
 // Obtener usuario por ID
 router.get('/usuarios/:id', ctrl.obtenerUsuarioPorId);
 
+// Actualizar usuario autenticado
+router.put('/usuarios/me', verifyToken, ctrl.actualizarUsuarioActual);
+
 // Actualizar usuario por ID
 router.put('/usuarios/:id', ctrl.actualizarUsuario);
 

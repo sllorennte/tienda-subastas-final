@@ -4,24 +4,34 @@
   <meta charset="UTF-8" />
   <title>Panel de Administrador - Biddable</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <!-- Bootstrap + Iconos + Fuente -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/admin.css" />
+  <link rel="stylesheet" href="css/theme.css" />
 </head>
 <body>
-
   <!-- Header -->
-  <header class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center">
-      <img src="uploads/logo-removebg-preview.png" alt="Logo" height="40" class="me-2">
-      <h5 class="mb-0">Panel de Administración - Biddable</h5>
+  <header class="bg-dark text-white p-3">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <a href="index.html" class="text-white text-decoration-none d-flex align-items-center gap-3">
+          <img src="uploads/logo-removebg-preview.png" height="40" alt="logo">
+          <strong>Biddable</strong>
+        </a>
+        <nav class="d-none d-md-flex gap-3 align-items-center ms-3">
+          <a href="index_admin.html" class="text-white text-decoration-none">Dashboard</a>
+          <a href="gestion_productos.html" class="text-white text-decoration-none">Productos</a>
+          <a href="gestion_usuarios.html" class="text-white text-decoration-none">Usuarios</a>
+          <a href="admin_subastas.html" class="text-white text-decoration-none">Subastas</a>
+        </nav>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="notificaciones.html" class="text-white position-relative"><i class="fas fa-bell"></i></a>
+        <button class="btn btn-outline-light" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</button>
+      </div>
     </div>
-    <button class="btn btn-outline-light" onclick="cerrarSesion()">
-      <i class="fas fa-sign-out-alt"></i> Cerrar sesión
-    </button>
   </header>
 
   <!-- Contenido -->
@@ -65,7 +75,7 @@
   </main>
 <!-- Contenedor para notificaciones -->
 <div id="notificacion-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
-<script src="js/notificacion.js"></script>
+<script src="js/notificacion.module.js" type="module"></script>
 
   <!-- JS -->
   <script>

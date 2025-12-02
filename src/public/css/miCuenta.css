@@ -44,21 +44,70 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.07);
 }
 
-.puja-card h5 {
-  margin-bottom: 0.5rem;
-  color: #1d3557;
-  font-weight: 700;
-}
-
-.puja-card p {
-  margin: 0;
-  font-size: 0.95rem;
-}
-
 /* Secciones dinámicas */
 .seccion-activa {
   display: block;
 }
 .d-none {
   display: none !important;
+}
+
+/* Configuration panel styling */
+.profile-panel {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.profile-avatar {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: var(--shadow-card, 0 6px 18px rgba(0,0,0,0.06));
+}
+
+.profile-avatar img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.profile-main {
+  background: white;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card, 0 6px 18px rgba(0,0,0,0.06));
+}
+
+@media (max-width: 900px) {
+  .profile-panel { grid-template-columns: 1fr; }
+}
+
+/* New account page styles */
+.account-card .card-header h3 {
+  color: #0f172a;
+  font-weight: 700;
+}
+.account-card .card-header p {
+  color: #6b7280;
+}
+.account-avatar {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 6px solid #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+.account-aside { background: linear-gradient(180deg,#ffffff,#fbfbfd); }
+.account-card { border-radius: 12px; }
+.account-form .form-control { border-radius: 8px; }
+.account-form .notif-btn.active { background-color: #1d4ed8; color: white; border-color: #1d4ed8; }
+
+@media (max-width: 992px) {
+  .account-aside { display: none; }
 }
