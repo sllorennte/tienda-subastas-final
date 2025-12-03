@@ -1,5 +1,6 @@
 const express    = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const mongoose   = require('mongoose');
 const path       = require('path');
 require('dotenv').config();
@@ -10,9 +11,9 @@ const pujaRutas     = require('./rutas/pujaRutas');
 const resenasRutas  = require('./rutas/resenasRutas'); 
 const mensajeRutas = require('./rutas/mensajeRutas');
 const notificacionRutas = require('./rutas/notificacionRutas');
+const uploadRutas = require('./rutas/uploadRutas');
 const transaccionRutas = require('./rutas/transaccionRutas');
 const favoritoRutas = require('./rutas/favoritoRutas');
-const uploadRutas = require('./rutas/uploadRutas');
 
 const app = express();
 const http = require('http');
@@ -44,6 +45,11 @@ try {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// CORS: permitir peticiones desde el frontend. En producción define FRONTEND_URL
+const allowedOrigin = process.env.FRONTEND_URL && process.env.FRONTEND_URL.trim() !== '' ? process.env.FRONTEND_URL : '*';
+app.use(cors({ origin: allowedOrigin, credentials: true }));
+app.options('*', cors());
 
 // Conexión a MongoDB (intento opcional: si falta MONGODB_URI el servidor seguirá levantando y se verá un aviso)
 // Determinar URI (usar variable de entorno o fallback a una instancia local para desarrollo)
@@ -87,9 +93,9 @@ app.use('/api', pujaRutas);       // /api/pujas...
 app.use('/api', resenasRutas);    // /api/resenas...
 app.use('/api', mensajeRutas);
 app.use('/api', notificacionRutas);
+app.use('/api', uploadRutas);
 app.use('/api', transaccionRutas);
 app.use('/api', favoritoRutas);
-app.use('/api', uploadRutas);
 
 // Punto de entrada del front-end
 app.get('/', (req, res) => {
